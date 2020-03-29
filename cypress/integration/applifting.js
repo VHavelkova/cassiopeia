@@ -1,8 +1,8 @@
 import random from 'lodash/random'
-import { generateTeamName, getIndexOfTeam, requestKlik, submit } from '../support/appliftingFunctions'
+import { generateTeamName, getIndexOfTeam, submit } from '../support/appliftingFunctions'
 
-const teamName = generateTeamName() // 'Test' + date
-const teamNameRequest = generateTeamName() + 'req' // different name for test with requests
+const teamName = generateTeamName() // 'Test' + date, unique so each test run is valid
+const teamNameRequest = generateTeamName() + '-req' // different name for test with requests
 const count = random(1, 5)
 const count2 = random(1, 5)
 const urlKlik = 'https://klikuj.herokuapp.com/api/v1/klik'
@@ -10,7 +10,7 @@ const urlLeaderboard = 'https://klikuj.herokuapp.com/api/v1/leaderboard'
 
 describe('Test scenario for app stfu and click', function() {
 
-  beforeEach('hook with routes', function() {
+  beforeEach('hook with routes', function() { // save routes in before hook
     cy.server()
     cy.route('GET', urlLeaderboard).as('leaderboard')
     cy.route('POST', urlKlik).as('klik')
@@ -19,7 +19,6 @@ describe('Test scenario for app stfu and click', function() {
   it('checks main functs', () => {
     cy.visit('http://test-stfu-applifting.herokuapp.com')
     
-    // save xhr requests
     cy.wait('@leaderboard')
 
     // checks that main buttons exist
@@ -30,7 +29,6 @@ describe('Test scenario for app stfu and click', function() {
 
     // nothing
     submit() // clicks on button 'Click' and waits 0,5s
-    //cy.contains('Vyplňte prosím toto pole').should('exist')
 
     // blank space    
     cy.get('input').type(' ')
@@ -47,7 +45,7 @@ describe('Test scenario for app stfu and click', function() {
     submit()
     cy.contains('Team name contains forbidden characters').should('not.exist')
 
-    // click x times
+    // click x times (count)
     for (var i = 0; i < count - 1; i++) { // - 1, because one click was already submitted in step before
       submit()
     }
@@ -66,10 +64,10 @@ describe('Test scenario for app stfu and click', function() {
     })
   })
   
-  it('tests functionality from new window', function() {
+  it('tests functionality from new window', function() { // tests clicks from team
     cy.visit('http://test-stfu-applifting.herokuapp.com/' + teamName)
 
-    // click x times
+    // click x times (count2)
     for (var i = 0; i < count2; i++) {
       submit()
     }
@@ -88,8 +86,7 @@ describe('Test scenario for app stfu and click', function() {
     })
   })
 
-  it('tests app via requests', () => {
-
+  it('tests app via requests', () => { // tests main functionalities through api requests
     cy.request('POST', urlKlik, {'team': teamNameRequest, 'session': teamNameRequest})
     // session string same as teamNameRequest, because it is unique for each run too
       .then((response) => {
